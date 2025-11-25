@@ -1,18 +1,24 @@
-// components/MusicFeed.js
+// src/components/MusicFeed.jsx
 import React, { useState } from 'react';
 import MusicCard from './MusicCard';
 
 const MusicFeed = ({ songs, onPlaySong, onAddSong }) => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [newSong, setNewSong] = useState({
     title: '',
     artist: '',
     audioUrl: '',
     category: 'Chill',
-    duration: ''
+    duration: '',
+    albumArt: ''
   });
 
-  const categories = ['Chill', 'Study', 'Happy', 'Workout', 'Party', 'Sleep'];
+  const categories = ['All', 'Chill', 'Study', 'Happy', 'Workout', 'Party', 'Sleep'];
+
+  const filteredSongs = selectedCategory === 'All' 
+    ? songs 
+    : songs.filter(song => song.category === selectedCategory);
 
   const handleAddSong = (e) => {
     e.preventDefault();
@@ -23,7 +29,8 @@ const MusicFeed = ({ songs, onPlaySong, onAddSong }) => {
         artist: '',
         audioUrl: '',
         category: 'Chill',
-        duration: ''
+        duration: '',
+        albumArt: ''
       });
       setShowAddForm(false);
     }
@@ -48,7 +55,7 @@ const MusicFeed = ({ songs, onPlaySong, onAddSong }) => {
           className="add-song-btn"
           onClick={() => setShowAddForm(!showAddForm)}
         >
-          + Add Song
+          {showAddForm ? 'Cancel' : '+ Add Song'}
         </button>
       </div>
 
@@ -57,14 +64,14 @@ const MusicFeed = ({ songs, onPlaySong, onAddSong }) => {
           <h3>Add New Song</h3>
           <input
             type="text"
-            placeholder="Song Title"
+            placeholder="Song Title *"
             value={newSong.title}
             onChange={(e) => setNewSong(prev => ({ ...prev, title: e.target.value }))}
             required
           />
           <input
             type="text"
-            placeholder="Artist"
+            placeholder="Artist *"
             value={newSong.artist}
             onChange={(e) => setNewSong(prev => ({ ...prev, artist: e.target.value }))}
             required
@@ -85,18 +92,23 @@ const MusicFeed = ({ songs, onPlaySong, onAddSong }) => {
             value={newSong.category}
             onChange={(e) => setNewSong(prev => ({ ...prev, category: e.target.value }))}
           >
-            {categories.map(cat => (
+            {categories.filter(cat => cat !== 'All').map(cat => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
           
           <div className="image-upload">
-            <label>Album Art:</label>
+            <label>Album Art (Optional):</label>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => handleImageUpload(e, 'albumArt')}
             />
+            {newSong.albumArt && (
+              <div className="cover-preview">
+                <img src={newSong.albumArt} alt="Preview" style={{width: '80px', height: '80px'}} />
+              </div>
+            )}
           </div>
 
           <button type="submit">Add Song</button>
@@ -105,20 +117,31 @@ const MusicFeed = ({ songs, onPlaySong, onAddSong }) => {
 
       <div className="categories">
         {categories.map(category => (
-          <button key={category} className="category-tag">
+          <button 
+            key={category}
+            className={`category-tag ${selectedCategory === category ? 'active' : ''}`}
+            onClick={() => setSelectedCategory(category)}
+          >
             {category}
           </button>
         ))}
       </div>
 
       <div className="songs-grid">
-        {songs.map(song => (
-          <MusicCard 
-            key={song.id} 
-            song={song} 
-            onPlay={onPlaySong}
-          />
-        ))}
+        {filteredSongs.length > 0 ? (
+          filteredSongs.map(song => (
+            <MusicCard 
+              key={song.id} 
+              song={song} 
+              onPlay={onPlaySong}
+              isDraggable={true}
+            />
+          ))
+        ) : (
+          <div className="empty-state">
+            <p>No songs found. Add some songs to get started!</p>
+          </div>
+        )}
       </div>
     </div>
   );
